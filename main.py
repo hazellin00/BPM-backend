@@ -28,7 +28,7 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://localhost:4173",                 # 本地開發用
-    "https://bmp-frontend-eight.vercel.app"   
+    "https://bmp-frontend-eight.vercel.app/"   
 ]
 
 # CORS 中介層
