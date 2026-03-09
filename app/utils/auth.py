@@ -1,64 +1,44 @@
-"""
-認證與授權工具
-處理 JWT 驗證、使用者身份識別等
-"""
-from fastapi import Header, HTTPException, status
-from typing import Optional
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from supabase import create_client, Client
+from app.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
+# 1. 初始化 Bearer 認證 (讓 Swagger UI 出現鎖頭)
+security = HTTPBearer()
 
-async def get_current_user_id(authorization: str = Header(None)) -> str:
+# 2. 初始化 Supabase Client 
+# 請確保 settings.SUPABASE_URL 和 settings.SUPABASE_ANON_KEY 是正確的
+supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+
+async def get_current_user_id(res: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """
-    從 Authorization Header 中提取使用者 ID
-
-    目前實作: 從 Supabase JWT 中提取 (簡化版)
-    TODO: 完整 JWT 驗證
-
-    Args:
-        authorization: Bearer token
-
-    Returns:
-        使用者 ID
-
-    Raises:
-        HTTPException: 未授權
+    透過 Supabase SDK 驗證 Token 並回傳 user_id (UUID)
+    這會自動處理 ES256 (ECC) 與 HS256 的演算法差異
     """
-    if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="需要身份驗證"
-        )
-
+    token = res.credentials 
+    
     try:
-        # 簡化實作: 假設 token 為 "Bearer {user_id}"
-        # 實際應使用 jwt.decode() 驗證 Supabase JWT
-        token = authorization.replace("Bearer ", "")
-
-        # TODO: 實作完整的 JWT 驗證邏輯
-        # 目前直接返回 token 作為 user_id (僅用於開發)
-        return token
+        # 3. 呼叫 SDK 驗證 Token
+        # 這是最安全的方式，它會直接向 Supabase 驗證這把鑰匙是否合法
+        user_response = supabase.auth.get_user(token)
+        
+        if not user_response or not user_response.user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="身分驗證失敗，無效的 Token"
+            )
+            
+        # 4. 提取使用者 UUID
+        user_id: str = user_response.user.id
+        return user_id
 
     except Exception as e:
-        logger.error(f"Token 解析失敗: {e}")
+        # 當 Token 過期、簽章錯誤或網路有問題時，會進到這裡
+        logger.error(f"❌ Supabase Auth Error: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="無效的身份驗證令牌"
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="身分驗證失敗，通行證已過期或無效"
         )
-
-
-async def verify_caregiver_access(
-    caregiver_id: str, patient_id: str
-) -> bool:
-    """
-    驗證監看者是否有權限訪問病患數據
-
-    Args:
-        caregiver_id: 監看者 ID
-        patient_id: 病患 ID
-
-    Returns:
-        是否有權限
-    """
-    from app.services.supabase_client import supabase_service
-
-    return await supabase_service.check_caregiver_access(caregiver_id, patient_id)

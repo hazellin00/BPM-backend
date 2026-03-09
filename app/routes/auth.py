@@ -21,22 +21,23 @@ async def register(auth_data: UserRegister):
     }
 
     # 3. 呼叫 Service 進行註冊
-    response = await supabase_service.sign_up(
+    user, error_msg = await supabase_service.sign_up(
         auth_data.email, 
         auth_data.password, 
         user_metadata
     )
     
-    if not response:
+    if error_msg:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="註冊失敗，Email 可能已被使用"
+            detail=f"註冊失敗: {error_msg}" 
         )
         
     return {
-        "message": "註冊成功，請至信箱查收驗證信",
+        # "message": "註冊成功，請至信箱查收驗證信",
+        "message": "註冊成功，歡迎使用！",
         "username": generated_username,
-        "user_id": response.id
+        "user_id": user.id
     }
 
 @router.post("/login", response_model=AuthResponse)
