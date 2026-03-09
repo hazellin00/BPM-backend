@@ -16,7 +16,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/measurements", tags=["Measurements"])
+router = APIRouter()
 
 
 @router.post(

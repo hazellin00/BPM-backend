@@ -15,7 +15,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/caregiver", tags=["Caregiver"])
+router = APIRouter()
 
 
 @router.post("/bind", response_model=CaregiverLinkResponse, status_code=status.HTTP_201_CREATED)

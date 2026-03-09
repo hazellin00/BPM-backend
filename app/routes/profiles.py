@@ -10,7 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/profiles", tags=["Profiles"])
+router = APIRouter()
 
 
 @router.get("/me", response_model=ProfileResponse)

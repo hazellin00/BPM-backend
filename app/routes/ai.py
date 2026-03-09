@@ -10,7 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/ai", tags=["AI Engine"])
+router = APIRouter()
 
 
 @router.post("/consult", response_model=AIConsultResponse)

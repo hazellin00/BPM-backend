@@ -3,7 +3,7 @@
 """
 from fastapi import APIRouter
 
-router = APIRouter(prefix="", tags=["Health"])
+router = APIRouter()
 
 
 @router.get("/")

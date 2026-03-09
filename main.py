@@ -42,12 +42,12 @@ app.add_middleware(
 
 # 3. 註冊路由，並統一加上 /api/v1 前綴
 # 這樣你的註冊網址就會是 https://.../api/v1/auth/register
-app.include_router(auth.router, prefix="/api/v1", tags=["Auth"])
 app.include_router(health.router, prefix="/api/v1", tags=["Health"])
 app.include_router(profiles.router, prefix="/api/v1", tags=["Profiles"])
 app.include_router(measurements.router, prefix="/api/v1", tags=["Measurements"])
 app.include_router(caregiver.router, prefix="/api/v1", tags=["Caregiver"])
 app.include_router(ai.router, prefix="/api/v1", tags=["AI"])
+app.include_router(auth.router, prefix="/api/v1", tags=["Auth"])
 
 
 @app.on_event("startup")
