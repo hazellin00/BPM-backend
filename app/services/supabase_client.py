@@ -25,18 +25,18 @@ class SupabaseService:
             raise
     async def sign_up(self, email: str, password: str, metadata: dict = None):
         """呼叫 Supabase Auth 註冊"""
-    try:
-        response = self.client.auth.sign_up({
-            "email": email,
-            "password": password,
-            "options": {
-                "data": metadata  # 這裡會存入 auth.users 的 raw_user_meta_data
-            }
-        })
-        return response.user
-    except Exception as e:
-        logger.error(f"Supabase Auth 註冊錯誤: {e}")
-        return None
+        try:
+            response = self.client.auth.sign_up({
+                "email": email,
+                "password": password,
+                "options": {
+                    "data": metadata  # 這裡會存入 auth.users 的 raw_user_meta_data
+                }
+            })
+            return response.user
+        except Exception as e:
+            logger.error(f"Supabase Auth 註冊錯誤: {e}")
+            return None
 
     async def sign_in(self, email: str, password: str):
         """呼叫 Supabase Auth 登入"""
