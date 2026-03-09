@@ -1,26 +1,37 @@
-import os
-from fastapi import FastAPI, HTTPException, Header
+"""
+VitalGuard Core API - 主應用程式入口
+
+智慧長輩健康守護系統後端
+基於 FastAPI + Supabase + Google Gemini AI
+"""
+import logging
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-from supabase import create_client, Client
-import google.generativeai as genai
+from app.config import settings
 
-# 1. 載入環境變數
-load_dotenv()
+# 配置日誌
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
-# 2. 專業化系統初始化
+# 創建 FastAPI 應用
 app = FastAPI(
-    title="VitalGuard Core API",
-    description="BMP 智慧血壓監測系統 - 核心數據與 AI 分析引擎",
-    version="1.0.0"
+    title=settings.APP_NAME,
+    description="🩺 智慧血壓監測系統 - 結合 5000 筆臨床數據的 AI 飲食推薦引擎",
+    version=settings.APP_VERSION,
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
-# 3. CORS 安全防護： Vercel 前端
 origins = [
-    "http://localhost:5173",                    
-    "https://bmp-frontend-eight.vercel.app",   
+    "http://localhost:5173",
+    "http://localhost:4173",                 # 本地開發用
+    "https://bmp-frontend-eight.vercel.app"   
 ]
 
+# CORS 中介層
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -29,52 +40,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 4. 初始化外部服務 (Supabase & Gemini)
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"), 
-    os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-)
+# 導入路由
+from app.routes import health, profiles, measurements, caregiver, ai
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-ai_model = genai.GenerativeModel('gemini-pro')
+# 註冊路由
+app.include_router(health.router)
+app.include_router(profiles.router)
+app.include_router(measurements.router)
+app.include_router(caregiver.router)
+app.include_router(ai.router)
 
-# --- API 服務路由 ---
 
-@app.get("/", tags=["Status"])
-def get_system_status():
-    """確認系統連線狀態"""
-    return {
-        "status": "operational",
-        "service": "VitalGuard Core API",
-        "message": "系統已就緒，守護長輩健康中"
-    }
+# 啟動事件
+@app.on_event("startup")
+async def startup_event():
+    """應用啟動時執行"""
+    logger.info("=" * 60)
+    logger.info("🩺 VitalGuard Core API 啟動中...")
+    logger.info(f"📦 版本: {settings.APP_VERSION}")
+    logger.info(f"🌐 CORS 允許來源: {origins}")
+    logger.info(f"🤖 AI 模型: {settings.GEMINI_MODEL}")
+    logger.info("=" * 60)
 
-@app.post("/api/v1/ai/consult", tags=["AI Engine"])
-async def get_elderly_advice(blood_pressure: dict):
-    """
-    接收血壓數據並產生 AI 衛教建議
-    """
-    sys = blood_pressure.get('sys')
-    dia = blood_pressure.get('dia')
-    
-    if not sys or not dia:
-        raise HTTPException(status_code=400, detail="缺少血壓數據")
 
-    # 針對長輩設計的溫馨 Prompt
-    prompt = (
-        f"我是你的健康助手。目前的血壓是收縮壓 {sys}, 舒張壓 {dia}。 "
-        "請以一位溫柔的專業護理師身份，給長輩一段 50 字內、溫馨且白話的飲食或生活建議。"
+@app.on_event("shutdown")
+async def shutdown_event():
+    """應用關閉時執行"""
+    logger.info("👋 VitalGuard Core API 正在關閉...")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.DEBUG,
+        log_level="info",
     )
-
-    try:
-        response = ai_model.generate_content(prompt)
-        return {"suggestion": response.text}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="AI 引擎暫時休息中，請稍後再試")
-
-@app.get("/api/v1/auth/verify", tags=["Security"])
-async def verify_user(authorization: str = Header(None)):
-    """驗證長輩身份 (JWT 預留位)"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="需要身份驗證")
-    return {"status": "authenticated", "message": "身份核對成功"}
