@@ -23,22 +23,52 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"❌ Supabase 連線失敗: {e}")
             raise
+    async def sign_up(self, email: str, password: str, metadata: dict = None):
+        """呼叫 Supabase Auth 註冊"""
+    try:
+        response = self.client.auth.sign_up({
+            "email": email,
+            "password": password,
+            "options": {
+                "data": metadata  # 這裡會存入 auth.users 的 raw_user_meta_data
+            }
+        })
+        return response.user
+    except Exception as e:
+        logger.error(f"Supabase Auth 註冊錯誤: {e}")
+        return None
+
+    async def sign_in(self, email: str, password: str):
+        """呼叫 Supabase Auth 登入"""
+        try:
+            response = self.client.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+            return {
+                "access_token": response.session.access_token,
+                "token_type": "bearer",
+                "user_id": response.user.id,
+                "email": response.user.email
+            }
+        except Exception as e:
+            logger.error(f"Supabase Auth 登入錯誤: {e}")
+            return None
 
     # --- Profiles 操作 ---
 
     async def get_profile_by_user_id(self, user_id: str):
-        """根據 user_id 取得個人檔案"""
         try:
             response = (
                 self.client.table("profiles")
                 .select("*")
-                .eq("user_id", user_id)
+                .eq("id", user_id) 
                 .maybe_single()
                 .execute()
             )
             return response.data
         except Exception as e:
-            logger.error(f"取得個人檔案失敗: {e}")
+            logger.error(f"取得檔案失敗: {e}")
             raise
 
     async def get_profile_by_sharing_code(self, sharing_code: str):

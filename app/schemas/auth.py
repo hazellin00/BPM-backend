@@ -4,6 +4,7 @@ from typing import Optional
 
 class UserRegister(BaseModel):
     """註冊時要求的欄位"""
+    name: str = Field(..., min_length=1, description="真實姓名")
     email: EmailStr = Field(..., description="使用者的電子郵件")
     password: str = Field(..., min_length=6, description="密碼，最少 6 位字元")
 

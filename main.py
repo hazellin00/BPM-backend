@@ -47,7 +47,7 @@ app.include_router(profiles.router, prefix="/api/v1", tags=["Profiles"])
 app.include_router(measurements.router, prefix="/api/v1", tags=["Measurements"])
 app.include_router(caregiver.router, prefix="/api/v1", tags=["Caregiver"])
 app.include_router(ai.router, prefix="/api/v1", tags=["AI"])
-app.include_router(auth.router, prefix="/api/v1", tags=["Auth"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 
 
 @app.on_event("startup")
