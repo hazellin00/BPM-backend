@@ -69,3 +69,8 @@ if __name__ == "__main__":
         reload=settings.DEBUG,
         log_level="info",
     )
+
+
+@app.get("/")
+async def root():
+    return {"message": "VitalGuard API 運行中", "docs": "/docs"}
