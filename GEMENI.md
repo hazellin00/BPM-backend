@@ -1,7 +1,7 @@
 # 後端開發規範 (FastAPI + AI)
 
 ## 1. 核心目標
-作為數據中台處理隱私紀錄，直接連接 **Supabase** 與 **Gemini AI**。必須以 Docker 容器化方式佈署於雲端平台，實現全天候 API 服務。
+作為數據中台處理隱私紀錄，直接連接 **Supabase** 與 **Gemini AI (google-generativeai)**。必須以 Docker 容器化方式佈署於雲端平台，實現全天候 API 服務。
 
 ## 2. 技術棧 (Backend Stack)
 - **框架**: FastAPI (Python)
